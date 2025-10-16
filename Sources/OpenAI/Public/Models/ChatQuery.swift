@@ -160,7 +160,12 @@ public struct ChatQuery: Equatable, Codable, Streamable, Sendable {
     ///
     /// The gpt-4o-audio-preview model can also be used to [generate audio](https://platform.openai.com/docs/guides/audio). To request that this model generate both text and audio responses, you can use: `["text", "audio"]`
     public var modalities: [Self.ChatCompletionModalities]?
-    
+
+    /// Custom parameters that can be added to the request body.
+    /// This allows passing additional parameters not defined in the standard OpenAI API.
+    /// For example: ["from_module": 1] for platform identification.
+    public let customParameters: [String: AnyCodable]?
+
     public init(
         messages: [Self.ChatCompletionMessageParam],
         model: Model,
@@ -189,7 +194,8 @@ public struct ChatQuery: Equatable, Codable, Streamable, Sendable {
         user: String? = nil,
         webSearchOptions: WebSearchOptions? = nil,
         stream: Bool = false,
-        streamOptions: StreamOptions? = nil
+        streamOptions: StreamOptions? = nil,
+        customParameters: [String: AnyCodable]? = nil
     ) {
         self.messages = messages
         self.model = model
@@ -219,6 +225,7 @@ public struct ChatQuery: Equatable, Codable, Streamable, Sendable {
         self.streamOptions = streamOptions
         self.audioOptions = audioOptions
         self.modalities = modalities
+        self.customParameters = customParameters
     }
     
     public enum ChatCompletionMessageParam: Codable, Equatable, Sendable {
@@ -1336,6 +1343,68 @@ public struct ChatQuery: Equatable, Codable, Streamable, Sendable {
         case streamOptions = "stream_options"
         case audioOptions = "audio"
         case modalities = "modalities"
+    }
+
+    // MARK: - Custom Encoding
+
+    public func encode(to encoder: Encoder) throws {
+        // First encode standard fields using CodingKeys
+        var container = encoder.container(keyedBy: CodingKeys.self)
+
+        try container.encode(messages, forKey: .messages)
+        try container.encode(model, forKey: .model)
+        try container.encodeIfPresent(reasoningEffort, forKey: .reasoningEffort)
+        try container.encodeIfPresent(frequencyPenalty, forKey: .frequencyPenalty)
+        try container.encodeIfPresent(logitBias, forKey: .logitBias)
+        try container.encodeIfPresent(logprobs, forKey: .logprobs)
+        try container.encodeIfPresent(maxTokens, forKey: .maxTokens)
+        try container.encodeIfPresent(maxCompletionTokens, forKey: .maxCompletionTokens)
+        try container.encodeIfPresent(metadata, forKey: .metadata)
+        try container.encodeIfPresent(n, forKey: .n)
+        try container.encodeIfPresent(parallelToolCalls, forKey: .parallelToolCalls)
+        try container.encodeIfPresent(prediction, forKey: .prediction)
+        try container.encodeIfPresent(presencePenalty, forKey: .presencePenalty)
+        try container.encodeIfPresent(responseFormat, forKey: .responseFormat)
+        try container.encodeIfPresent(seed, forKey: .seed)
+        try container.encodeIfPresent(serviceTier, forKey: .serviceTier)
+        try container.encodeIfPresent(stop, forKey: .stop)
+        try container.encodeIfPresent(store, forKey: .store)
+        try container.encodeIfPresent(temperature, forKey: .temperature)
+        try container.encodeIfPresent(toolChoice, forKey: .toolChoice)
+        try container.encodeIfPresent(tools, forKey: .tools)
+        try container.encodeIfPresent(topLogprobs, forKey: .topLogprobs)
+        try container.encodeIfPresent(topP, forKey: .topP)
+        try container.encodeIfPresent(user, forKey: .user)
+        try container.encodeIfPresent(webSearchOptions, forKey: .webSearchOptions)
+        try container.encode(stream, forKey: .stream)
+        try container.encodeIfPresent(streamOptions, forKey: .streamOptions)
+        try container.encodeIfPresent(audioOptions, forKey: .audioOptions)
+        try container.encodeIfPresent(modalities, forKey: .modalities)
+
+        // Then encode custom parameters at the top level using dynamic keys
+        if let customParameters = customParameters {
+            var dynamicContainer = encoder.container(keyedBy: DynamicCodingKey.self)
+            for (key, value) in customParameters {
+                let dynamicKey = DynamicCodingKey(stringValue: key)
+                try dynamicContainer.encode(value, forKey: dynamicKey)
+            }
+        }
+    }
+
+    // Helper struct for dynamic coding keys
+    private struct DynamicCodingKey: CodingKey {
+        var stringValue: String
+        var intValue: Int?
+
+        init(stringValue: String) {
+            self.stringValue = stringValue
+            self.intValue = nil
+        }
+
+        init?(intValue: Int) {
+            self.intValue = intValue
+            self.stringValue = "\(intValue)"
+        }
     }
 }
 
