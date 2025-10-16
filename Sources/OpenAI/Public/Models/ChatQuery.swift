@@ -1345,7 +1345,44 @@ public struct ChatQuery: Equatable, Codable, Streamable, Sendable {
         case modalities = "modalities"
     }
 
-    // MARK: - Custom Encoding
+    // MARK: - Custom Coding
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        self.messages = try container.decode([ChatCompletionMessageParam].self, forKey: .messages)
+        self.model = try container.decode(Model.self, forKey: .model)
+        self.reasoningEffort = try container.decodeIfPresent(ReasoningEffort.self, forKey: .reasoningEffort)
+        self.frequencyPenalty = try container.decodeIfPresent(Double.self, forKey: .frequencyPenalty)
+        self.logitBias = try container.decodeIfPresent([String: Int].self, forKey: .logitBias)
+        self.logprobs = try container.decodeIfPresent(Bool.self, forKey: .logprobs)
+        self.maxCompletionTokens = try container.decodeIfPresent(Int.self, forKey: .maxCompletionTokens)
+        self.maxTokens = try container.decodeIfPresent(Int.self, forKey: .maxTokens)
+        self.metadata = try container.decodeIfPresent([String: String].self, forKey: .metadata)
+        self.n = try container.decodeIfPresent(Int.self, forKey: .n)
+        self.parallelToolCalls = try container.decodeIfPresent(Bool.self, forKey: .parallelToolCalls)
+        self.prediction = try container.decodeIfPresent(PredictedOutputConfig.self, forKey: .prediction)
+        self.presencePenalty = try container.decodeIfPresent(Double.self, forKey: .presencePenalty)
+        self.responseFormat = try container.decodeIfPresent(ResponseFormat.self, forKey: .responseFormat)
+        self.seed = try container.decodeIfPresent(Int.self, forKey: .seed)
+        self.serviceTier = try container.decodeIfPresent(ServiceTier.self, forKey: .serviceTier)
+        self.stop = try container.decodeIfPresent(Stop.self, forKey: .stop)
+        self.store = try container.decodeIfPresent(Bool.self, forKey: .store)
+        self.temperature = try container.decodeIfPresent(Double.self, forKey: .temperature)
+        self.toolChoice = try container.decodeIfPresent(ChatCompletionFunctionCallOptionParam.self, forKey: .toolChoice)
+        self.tools = try container.decodeIfPresent([ChatCompletionToolParam].self, forKey: .tools)
+        self.topLogprobs = try container.decodeIfPresent(Int.self, forKey: .topLogprobs)
+        self.topP = try container.decodeIfPresent(Double.self, forKey: .topP)
+        self.user = try container.decodeIfPresent(String.self, forKey: .user)
+        self.webSearchOptions = try container.decodeIfPresent(WebSearchOptions.self, forKey: .webSearchOptions)
+        self.stream = try container.decode(Bool.self, forKey: .stream)
+        self.streamOptions = try container.decodeIfPresent(StreamOptions.self, forKey: .streamOptions)
+        self.audioOptions = try container.decodeIfPresent(AudioOptions.self, forKey: .audioOptions)
+        self.modalities = try container.decodeIfPresent([ChatCompletionModalities].self, forKey: .modalities)
+
+        // customParameters is only used for encoding, not decoding
+        self.customParameters = nil
+    }
 
     public func encode(to encoder: Encoder) throws {
         // First encode standard fields using CodingKeys
